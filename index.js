@@ -1,5 +1,7 @@
 const ReactNative = require('react-native')
 const { Buffer } = require('buffer')
+const ESC = require('./js/esc')
+const Util = require('./js/util')
 const { NativeModules, DeviceEventEmitter } = ReactNative
 const BluetoothSerial = NativeModules.BluetoothSerial
 
@@ -33,5 +35,10 @@ BluetoothSerial.write = (data) => {
   }
   return BluetoothSerial.writeToDevice(data.toString('base64'))
 }
+
+BluetoothSerial.ESC = ESC
+BluetoothSerial.Util = Util
+
+ESC._setBT(BluetoothSerial)
 
 module.exports = BluetoothSerial
