@@ -19,6 +19,7 @@ const Common = {
   FONT_SMALL: "1B 4D 01", // 小号字体 9x17
   FONT_NORMAL: "1B 4D 00", // 正常 12x24
   FONT_BOLD: "1B 45 01", // 粗体
+  FONT_THIN: "1B 45 00", // 细体
 
   FONT_HEIGHT_TIMES: '1B 21 10',
   FONT_WIDTH_TIMES: '1B 21 20',
@@ -28,7 +29,11 @@ const Common = {
   QRCODEINIT: '1D 28 6B 03 00 31 43 05', // 二维码初始化
   QRCODESEND: '1D 28 6B 03 00 31 51 30', // 二维码发送到打印机
 
-  SOUND: "1B 42 02 02" // 蜂鸣 2次/100ms
+  SOUND: "1B 42 02 02", // 蜂鸣 2次/100ms
+
+  BARCODEHEIGHT: '1D 68 78', // 条形码高度
+  BARCODEWIDTH: '1D 77 02', // 条形码宽度度
+  BARCODEHRI: '1D 48 02',  // 条形码HRI位置
 }
 
 /**
@@ -62,7 +67,14 @@ const setConfig = (config) => {
 * @param {*} wordNumber 打印字符的总长度
 */
 const leftRight = (left, right, wordNumber = Config.wordNumber) => {
+  console.log(left,wordNumber,Util.getWordsLength(left), Util.getWordsLength(right), wordNumber - Util.getWordsLength(left) - Util.getWordsLength(right))
   return left + Util.getSpace(wordNumber - Util.getWordsLength(left) - Util.getWordsLength(right)) + right
+}
+
+const alignColumn = (left, right, wordNumber = Config.wordNumber) => {
+  let a=left + Util.getSpace(wordNumber - Util.getWordsLength(left)) + right
+  console.log(a);
+  return left + Util.getSpace(wordNumber - Util.getWordsLength(left)) + right
 }
 
 /**
@@ -75,6 +87,21 @@ const leftRight = (left, right, wordNumber = Config.wordNumber) => {
 const leftCenterRight = (left, center, right, wordNumber = Config.wordNumber) => {
   const spaceLen = Util.getSpace((wordNumber - Util.getWordsLength(left) - Util.getWordsLength(center) - Util.getWordsLength(right)) / 4)
   return left + spaceLen + center + spaceLen + right
+}
+
+/**
+* 配置条形码的 16 进制数据
+*/
+const setBarCode = (str) => {
+  let strL = str.length + 2
+  let pL
+  if(strL<16){
+    pL = '0'+ strL.toString(16)    
+  }else{
+    pL = strL.toString(16)
+  }
+  let map = `1D 6B 49 ${pL} 7B 42 ${Util.stringToHex(str)}`
+  return map
 }
 
 /**
@@ -138,7 +165,8 @@ const ESC = {
     keyValue,
     leftCenterRight,
     jboConfigQrcode,
-    mdaConfigQrcode
+    mdaConfigQrcode,
+    alignColumn,
   },
   _setBT,
   setConfig,
@@ -180,6 +208,10 @@ const ESC = {
     writeHexToDevice(Common.FONT_BOLD)
   },
 
+  fontThin: () => {
+    writeHexToDevice(Common.FONT_THIN)
+  },
+
   fontHeightTimes: () => {
     writeHexToDevice(Common.FONT_HEIGHT_TIMES)
   },
@@ -193,6 +225,19 @@ const ESC = {
   // 打印文字
   text: (str) => {
     writeTextToDevice(str)
+  },
+
+  // 打印条形码
+  barCode: (str) => {
+    writeHexToDevice(Common.BARCODEHEIGHT);
+    writeHexToDevice(Common.BARCODEHRI);
+    writeHexToDevice(Common.BARCODEWIDTH);
+    writeHexToDevice(setBarCode(str));
+  },
+
+  // 打印16进制
+  hexText: (str) => {
+    writeHexToDevice(str)
   },
 
   /**
